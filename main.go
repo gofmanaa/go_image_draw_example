@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/draw"
 	"image/png"
 	"log"
 	"math"
@@ -20,6 +19,10 @@ var (
 	green color.Color = color.RGBA{0, 255, 0, 255}
 	black color.Color = color.RGBA{0, 0, 0, 255}
 	white color.Color = color.RGBA{255, 255, 255, 255}
+)
+var (
+	height int = 1200
+	weight int = 960
 )
 
 func main() {
@@ -39,22 +42,24 @@ func main() {
 }
 
 func drawHtmlHandle(w http.ResponseWriter, r *http.Request) {
-	m := image.NewRGBA(image.Rect(0, 0, 1200, 960))
+	m := image.NewRGBA(image.Rect(0, 0, height, weight))
 
-	draw.Draw(m, m.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
-	for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
-		m.Set(x, m.Bounds().Max.Y/2, white) // to change a single pixel
-	}
-	for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
-		m.Set(m.Bounds().Max.X/2, y, white) // to change a single pixel
-	}
-	Fractal(m)
-	Line(0, 0, m.Bounds().Max.X, 0, m, red)
-	Line(m.Bounds().Max.X, 0, 0, 0, m, red)
-	Line(0, 0, 0, m.Bounds().Max.Y-1, m, blue)
-	Line(m.Bounds().Max.X-1, 0, m.Bounds().Max.X-1, m.Bounds().Max.Y-1, m, green)
-	Line(0, m.Bounds().Max.Y-1, m.Bounds().Max.X-1, m.Bounds().Max.Y-1, m, white)
-	Circle(m.Bounds().Max.X/2, m.Bounds().Max.Y/2, 100, m, green)
+	//draw.Draw(m, m.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
+	//for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
+	//	m.Set(x, m.Bounds().Max.Y/2, white) // to change a single pixel
+	//}
+	//for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
+	//	m.Set(m.Bounds().Max.X/2, y, white) // to change a single pixel
+	//}
+
+	fractal2(m)
+	//Fractal(m)
+	//Line(0, 0, m.Bounds().Max.X, 0, m, red)
+	//Line(m.Bounds().Max.X, 0, 0, 0, m, red)
+	//Line(0, 0, 0, m.Bounds().Max.Y-1, m, blue)
+	//Line(m.Bounds().Max.X-1, 0, m.Bounds().Max.X-1, m.Bounds().Max.Y-1, m, green)
+	//Line(0, m.Bounds().Max.Y-1, m.Bounds().Max.X-1, m.Bounds().Max.Y-1, m, white)
+	//Circle(m.Bounds().Max.X/2, m.Bounds().Max.Y/2, 100, m, green)
 	//jpeg.Encode(w, m , &jpeg.Options{90})
 	png.Encode(w, m)
 }
@@ -150,11 +155,54 @@ func Fractal(img *image.RGBA) {
 
 func mandelbrot(in complex128) uint8 {
 	n := in
-	for i := uint8(0) + 150; i > 0; i-- {
+	for i := uint8(0) + 255; i > 0; i-- {
 		if cmplx.Abs(n) > 2 {
 			return i
 		}
 		n = cmplx.Pow(n, complex(2, 0)) + in
 	}
 	return 255
+}
+
+func mandelb(x0, y0, iter int) int {
+	x := int64(x0)
+	y := int64(y0)
+	var xnew int64
+	var ynew int64
+
+	for i := 0; i < iter; i++ {
+		xnew = x*x - y*y + int64(x0)
+		ynew = 2*x*y + int64(y0)
+		if xnew*xnew+ynew*ynew > 4 {
+			return i
+		}
+		x = xnew
+		y = ynew
+	}
+	return iter
+}
+
+func fractal2(img *image.RGBA) {
+	dx := img.Bounds().Max.X
+	dy := img.Bounds().Max.Y
+	zoom := 2
+	ietrations := 400
+	xShift := dx / 2
+	yShift := dy / 2
+
+	for v := 0; v < dy; v++ {
+		for u := 0; u < dx; u++ {
+			x := u - xShift
+			y := (v * -1) + dy - yShift
+			x = x / zoom
+			y = y / zoom
+
+			level := mandelb(x, y, ietrations)
+			if level == ietrations {
+				img.Set(u, v, black)
+			} else {
+				img.Set(u, v, white)
+			}
+		}
+	}
 }
