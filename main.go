@@ -182,8 +182,10 @@ func mandelb(x0, y0 float64, iter int) int {
 func fractal2(img *image.RGBA) {
 	dx := height
 	dy := weight
-	zoom := 200.0
-	iterations := 80
+	userX := -0.794591379577363
+	userY := 0.16093921135504
+	zoom := int64(9990999900)
+	iterations := 255
 	xShift := float64(dx / 2)
 	yShift := float64(dy / 2)
 
@@ -191,16 +193,17 @@ func fractal2(img *image.RGBA) {
 		for u := 0; u < dx; u++ {
 			x := float64(u) - xShift
 			y := (float64(v) * -1) + float64(dy) - yShift
-			x = x / zoom
-			y = y / zoom
+			x = x + userX*float64(zoom)
+			y = y + userY*float64(zoom)
+			x = x / float64(zoom)
+			y = y / float64(zoom)
 
 			level := mandelb(x, y, iterations)
 			if level == iterations {
-				img.Set(u, v, red)
-			} else if level%1 == 0 {
-				img.Set(u, v, color.RGBA{-uint8(level/iterations - iterations*level), uint8(level/iterations - iterations*level), uint8(level/iterations - iterations*level), 255})
-			} else {
 				img.Set(u, v, black)
+			} else {
+				clr := 255 - uint8(level*255/iterations)
+				img.Set(u, v, color.RGBA{clr, clr, clr, 255})
 			}
 
 		}
