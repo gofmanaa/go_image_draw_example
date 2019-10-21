@@ -21,8 +21,8 @@ var (
 	white color.Color = color.RGBA{255, 255, 255, 255}
 )
 var (
-	height int = 1200
-	weight int = 960
+	height int = 4096
+	weight int = 2160
 )
 
 func main() {
@@ -139,7 +139,7 @@ func Circle(x1, y1, radius int, img *image.RGBA, clr color.Color) { //Bresenham'
 	}
 }
 
-func Fractal(img *image.RGBA) {
+func fractal(img *image.RGBA) {
 	dx := img.Bounds().Max.X
 	dy := img.Bounds().Max.Y
 	for x := 0; x < dx; x++ {
@@ -164,45 +164,45 @@ func mandelbrot(in complex128) uint8 {
 	return 255
 }
 
-func mandelb(x0, y0, iter int) int {
-	x := int64(x0)
-	y := int64(y0)
-	var xnew int64
-	var ynew int64
-
+func mandelb(x0, y0 float64, iter int) int {
+	x := x0
+	y := y0
 	for i := 0; i < iter; i++ {
-		xnew = x*x - y*y + int64(x0)
-		ynew = 2*x*y + int64(y0)
-		if xnew*xnew+ynew*ynew > 4 {
+		real2 := x * x
+		imag2 := y * y
+		if (real2 + imag2) > 4.0 {
 			return i
 		}
-		x = xnew
-		y = ynew
+		y = 2*x*y + y0
+		x = real2 - imag2 + x0
 	}
 	return iter
 }
 
 func fractal2(img *image.RGBA) {
-	dx := img.Bounds().Max.X
-	dy := img.Bounds().Max.Y
-	zoom := 2
-	ietrations := 400
-	xShift := dx / 2
-	yShift := dy / 2
+	dx := height
+	dy := weight
+	zoom := 200.0
+	iterations := 80
+	xShift := float64(dx / 2)
+	yShift := float64(dy / 2)
 
 	for v := 0; v < dy; v++ {
 		for u := 0; u < dx; u++ {
-			x := u - xShift
-			y := (v * -1) + dy - yShift
+			x := float64(u) - xShift
+			y := (float64(v) * -1) + float64(dy) - yShift
 			x = x / zoom
 			y = y / zoom
 
-			level := mandelb(x, y, ietrations)
-			if level == ietrations {
-				img.Set(u, v, black)
+			level := mandelb(x, y, iterations)
+			if level == iterations {
+				img.Set(u, v, red)
+			} else if level%1 == 0 {
+				img.Set(u, v, color.RGBA{-uint8(level/iterations - iterations*level), uint8(level/iterations - iterations*level), uint8(level/iterations - iterations*level), 255})
 			} else {
-				img.Set(u, v, white)
+				img.Set(u, v, black)
 			}
+
 		}
 	}
 }
